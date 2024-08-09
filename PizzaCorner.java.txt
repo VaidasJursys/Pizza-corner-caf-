@@ -1,0 +1,279 @@
+import java.util.*;
+
+public class PizzaCorner {
+
+    // Constants for pizza size, base, sauce, and cheese options.
+    static final Map<String, String> SIZE_OPTIONS = Map.of("S", "Small", "M", "Medium", "L", "Large");
+    static final Map<String, String> BASE_OPTIONS = new TreeMap<>(Map.of("A", "Original", "B", "Thin Crust",
+            "C", "Thick Crust", "D", "Stuffed Crust"));
+    static final Map<String, String> SAUCE_OPTIONS = new TreeMap<>(Map.of("A", "Tomato", "B", "Barbeque"));
+    static final Map<String, String> CHEESE_OPTIONS = new TreeMap<>(Map.of("A", "Mozzarella", "B", "Lowfat",
+            "C", "Vegan", "D", "No Cheese"));
+
+    // Valid toppings list
+    static final List<String> VALID_TOPPINGS = Arrays.asList("pepperoni", "ham", "beef", "chicken", "sausage",
+            "bacon", "pepper", "olives", "onions", "tomato", "sweetcorn", "pineapple", "mushroom");
+
+    // Price constants
+    static final double ADDITIONAL_TOPPING_CHARGE = 0.99;
+    static final double PIZZA_PRICE = 8.99;
+    static final int MAX_TOPPINGS = 4;
+
+    // To store orders.
+    static List<Order> orders = new ArrayList<>();
+
+    // Variables to store total orders and toppings.
+    static int totalOrders = 0;
+    static int totalToppings = 0;
+
+    // Main method.
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        // Loop.
+        while (true) {
+            displayMenu();
+            System.out.print("Enter your choice: ");
+            String choice = scanner.nextLine().toLowerCase();
+
+            // Switch between different customer choices.
+            switch (choice) {
+                case "a":
+                    orderPizza(scanner);
+                    break;
+                case "b":
+                    provideStatistics();
+                    break;
+                case "c":
+                    System.out.println("Thank you, have a nice day!");
+                    System.exit(0);
+                    break;
+                default:
+                    System.out.println("Wrong choice. Please try again.");
+            }
+        }
+    }
+
+    // Main menu.
+    static void displayMenu() {
+        System.out.println("Menu Options - Type A, B, or C:");
+        System.out.println("A) Order a pizza");
+        System.out.println("B) Statistics");
+        System.out.println("C) Exit");
+    }
+
+    // Pizza ordering process
+    static void orderPizza(Scanner scanner) {
+        // Pizza size.
+        System.out.print("Choose pizza size - Type S, M, or L: ");
+        String size = validateInput(scanner, SIZE_OPTIONS.keySet());
+
+        // Pizza base.
+        System.out.println("Choose pizza base:");
+        displayOptions(BASE_OPTIONS);
+        String base = validateInput(scanner, BASE_OPTIONS.keySet());
+
+        // Pizza sauce.
+        System.out.println("Choose pizza sauce:");
+        displayOptions(SAUCE_OPTIONS);
+        String sauce = validateInput(scanner, SAUCE_OPTIONS.keySet());
+
+        // Pizza toppings.
+        System.out.println(
+                "Choose toppings (Type topping you want, hit Enter after each to select and type DONE to finish :) ");
+        System.out.println(" pepperoni, ham, beef, chicken, sausage, bacon, pepper,  \r\n" + //
+                " olives, onions, tomato, sweetcorn, mushroom, pineapple. ");
+        List<String> toppingsList = new ArrayList<>();
+        while (true) {
+            String topping = scanner.nextLine().trim().toLowerCase();
+            if (topping.equals("done")) {
+                break;
+            } else if (VALID_TOPPINGS.contains(topping)) {
+                toppingsList.add(topping);
+            } else {
+                System.out.println("Wrong choice. Please try again.");
+            }
+        }
+        String[] toppings = toppingsList.toArray(new String[0]);
+
+        // Pizza cheese choice.
+        System.out.println("Choose type of cheese:");
+        displayOptions(CHEESE_OPTIONS);
+        String cheese = validateInput(scanner, CHEESE_OPTIONS.keySet());
+
+        // Calculation of additional toppings charge and display order details.
+        int additionalToppings = Math.max(0, toppings.length - MAX_TOPPINGS);
+        double additionalCharge = additionalToppings * ADDITIONAL_TOPPING_CHARGE;
+
+        System.out.println("Order Details:");
+        System.out.println("Size: " + SIZE_OPTIONS.get(size));
+        System.out.println("Base: " + BASE_OPTIONS.get(base));
+        System.out.println("Sauce: " + SAUCE_OPTIONS.get(sauce));
+        System.out.println("Toppings: " + String.join(", ", toppings));
+        System.out.println("Cheese: " + CHEESE_OPTIONS.get(cheese));
+        System.out.println("Additional Topping Charge: £" + additionalCharge);
+        System.out.println("Pizza Price: £" + PIZZA_PRICE);
+
+        // Calculation and display total amount to pay.
+        double totalAmount = calculateTotalAmount(additionalCharge);
+        System.out.println("Total Amount to Pay: £" + totalAmount);
+
+        System.out.println("Thank you for your order!");
+
+        Order order = new Order(size, base, sauce, toppings, cheese, additionalCharge);
+        orders.add(order);
+
+        // Update count of toppings.
+        totalOrders++;
+        totalToppings += toppings.length;
+    }
+
+    // Calculation of the total amount to pay.
+    static double calculateTotalAmount(double additionalCharge) {
+        return PIZZA_PRICE + additionalCharge;
+    }
+
+    // Statistics about order.
+    static void provideStatistics() {
+        System.out.println("Statistics:");
+        System.out.println("Total Orders: " + totalOrders);
+
+        // Previous orders.
+        displayPreviousOrders();
+
+        // Counts for different choices.
+        displayFrequencyCounts("Frequency count for Size:", SIZE_OPTIONS, "size");
+        displayFrequencyCounts("Frequency count for Base:", BASE_OPTIONS, "base");
+        displayFrequencyCounts("Frequency count for Sauce:", SAUCE_OPTIONS, "sauce");
+        displayFrequencyCounts("Frequency count for Cheese:", CHEESE_OPTIONS, "cheese");
+        displayToppingsFrequencyCount("Frequency count for Toppings:");
+
+        // Average number of toppings per order.
+        System.out.println("Average Number of Toppings: " + (totalToppings / (double) totalOrders));
+    }
+
+    // Previous orders.
+    static void displayPreviousOrders() {
+        if (orders.isEmpty()) {
+            System.out.println("No previous orders.");
+        } else {
+            System.out.println("Previous Orders:");
+            for (int i = 0; i < Math.min(orders.size(), 10); i++) {
+                System.out.println("Order " + (i + 1) + ": " + orders.get(i));
+            }
+        }
+    }
+
+    // Displays list of options.
+    static void displayOptions(Map<String, String> options) {
+        for (Map.Entry<String, String> entry : options.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+        }
+    }
+
+    // Validate input against a set of options.
+    static String validateInput(Scanner scanner, Set<String> options) {
+        String userInput;
+        while (true) {
+            userInput = scanner.nextLine().trim().toUpperCase();
+            if (options.contains(userInput)) {
+                break;
+            } else {
+                System.out.println("Wrong choice. Please try again.");
+            }
+        }
+        return userInput;
+    }
+
+    // Displays frequency count for different choices.
+    static void displayFrequencyCounts(String label, Map<String, String> options, String type) {
+        System.out.println(label);
+        for (Map.Entry<String, String> entry : options.entrySet()) {
+            int count = getCount(entry.getKey(), type);
+            System.out.println(entry.getValue() + ": " + count);
+        }
+    }
+
+    // Displays frequency count for toppings.
+    static void displayToppingsFrequencyCount(String label) {
+        System.out.println(label);
+        Map<String, Integer> toppingsCount = new HashMap<>();
+        for (Order order : orders) {
+            for (String topping : order.toppings) {
+                toppingsCount.put(topping, toppingsCount.getOrDefault(topping, 0) + 1);
+            }
+        }
+        for (Map.Entry<String, Integer> entry : toppingsCount.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+        }
+    }
+
+    // Count occurrences of a choice in orders.
+    static int getCount(String choice, String type) {
+        int count = 0;
+        switch (type) {
+            case "size":
+                for (Order order : orders) {
+                    if (order.size.equalsIgnoreCase(choice)) {
+                        count++;
+                    }
+                }
+                break;
+            case "base":
+                for (Order order : orders) {
+                    if (order.base.equalsIgnoreCase(choice)) {
+                        count++;
+                    }
+                }
+                break;
+            case "sauce":
+                for (Order order : orders) {
+                    if (order.sauce.equalsIgnoreCase(choice)) {
+                        count++;
+                    }
+                }
+                break;
+            case "cheese":
+                for (Order order : orders) {
+                    if (order.cheese.equalsIgnoreCase(choice)) {
+                        count++;
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+        return count;
+    }
+}
+
+// Class for a pizza order.
+class Order {
+    String size;
+    String base;
+    String sauce;
+    String[] toppings;
+    String cheese;
+    double additionalToppingCharge;
+
+    // Order details.
+    public Order(String size, String base, String sauce, String[] toppings, String cheese,
+            double additionalToppingCharge) {
+        this.size = size;
+        this.base = base;
+        this.sauce = sauce;
+        this.toppings = toppings;
+        this.cheese = cheese;
+        this.additionalToppingCharge = additionalToppingCharge;
+    }
+
+    // Converts order details to a string
+    @Override
+    public String toString() {
+        return "Size: " + size + ", Base: " + base + ", Sauce: " + sauce +
+                ", Toppings: " + String.join(", ", toppings) + ", Cheese: " + cheese +
+                ", Additional Topping Charge: £" + additionalToppingCharge;
+    }
+}
+
+
